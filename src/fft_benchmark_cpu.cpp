@@ -122,7 +122,7 @@ int main(int argc, char* argv[])
         fftwf_destroy_plan(outPlan);
 
         delete[] bufferIn;
-        delete[] bufferOut
+        delete[] bufferOut;
     }
 
     return 0;

@@ -93,11 +93,11 @@ int main(int argc, char* argv[])
 
         // Setup clFFT
         clfftSetupData fftSetup;
-        err = clfftInitSetupData(&fftSetup);
-        err = clfftSetup(&fftSetup);
+        CLFFT_CHECK(clfftInitSetupData(&fftSetup));
+        CLFFT_CHECK(clfftSetup(&fftSetup));
 
         // Create a complex clFFT plan
-        err = clfftCreateDefaultPlan(&inPlan, context, rank, fft_dims);
+        CLFFT_CHECK(clfftCreateDefaultPlan(&inPlan, context, rank, fft_dims));
 
         // Configure clFFT inPlan
         CLFFT_CHECK(clfftSetLayout(inPlan, CLFFT_COMPLEX_INTERLEAVED, CLFFT_COMPLEX_INTERLEAVED));
@@ -118,10 +118,11 @@ int main(int argc, char* argv[])
 
         // No data is copied to buffers as FFT performance is not data
         // dependent, but only size dependent
-		complexIn  = clCreateBuffer(context, CL_MEM_READ_WRITE, bufferSize, 0, &err);
-		complexOut = clCreateBuffer(context, CL_MEM_READ_WRITE, bufferSize, 0, &err);
+        complexIn  = clCreateBuffer(context, CL_MEM_READ_WRITE, bufferSize, 0, &err);
+        CLFFT_CHECK(err);
+        complexOut = clCreateBuffer(context, CL_MEM_READ_WRITE, bufferSize, 0, &err);
+        CLFFT_CHECK(err);
 
-        std::cout << "Number of dimensions: " << Rank << std::endl;
         std::cout << "Matrix dimensions: " << n << "x" << n << std::endl;
         std::cout << "Batch size: " << Batches << std::endl;
 
@@ -132,15 +133,15 @@ int main(int argc, char* argv[])
                                               0, NULL, NULL,
                                               &complexOut, &complexOut, NULL));
         }
-        clFinish(queue);
+        CLFFT_CHECK(clFinish(queue));
         tEnd = getTime();
         std::cout << "In-place C2C FFT time for " << Iterations << " runs: " << getTimeCount(tEnd, tStart) << " ms" << std::endl;
 
         // Destroy in-place FFT plan
-        clfftDestroyPlan(&inPlan);
+        CLFFT_CHECK(clfftDestroyPlan(&inPlan));
 
         // Create a complex clFFT plan
-        err = clfftCreateDefaultPlan(&outPlan, context, rank, fft_dims);
+        CLFFT_CHECK(clfftCreateDefaultPlan(&outPlan, context, rank, fft_dims));
 
         // Configure clFFT outPlan
         CLFFT_CHECK(clfftSetLayout(outPlan, CLFFT_COMPLEX_INTERLEAVED, CLFFT_COMPLEX_INTERLEAVED));
@@ -161,7 +162,7 @@ int main(int argc, char* argv[])
                                               0, NULL, NULL,
                                               &complexIn, &complexOut, NULL));
         }
-        clFinish(queue);
+        CLFFT_CHECK(clFinish(queue));
         tEnd = getTime();
         std::cout << "Out-of-place C2C FFT time for " << Iterations << " runs: " << getTimeCount(tEnd, tStart) << " ms" << std::endl;
 
@@ -173,25 +174,25 @@ int main(int argc, char* argv[])
                                               0, NULL, NULL,
                                               &complexIn, &complexOut, NULL));
         }
-        clFinish(queue);
+        CLFFT_CHECK(clFinish(queue));
         tEnd = getTime();
         std::cout << "Buffer Copy + Out-of-place C2C FFT time for " << Iterations << " runs: " << getTimeCount(tEnd, tStart) << " ms" << std::endl << std::endl;
 
-	    clReleaseMemObject(complexIn);
-	    clReleaseMemObject(complexOut);
+        CLFFT_CHECK(clReleaseMemObject(complexIn));
+        CLFFT_CHECK(clReleaseMemObject(complexOut));
 
         // Destroy out-of-place FFT plan
-        clfftDestroyPlan(&outPlan);
+        CLFFT_CHECK(clfftDestroyPlan(&outPlan));
 
         // Force release of clFFT temporary buffers
-        clfftTeardown();
+        CLFFT_CHECK(clfftTeardown());
     }
 
     // Flush/Release OpenCL resources
-    clFlush(queue);
-    clFinish(queue);
-    clReleaseCommandQueue(queue);
-    clReleaseContext(context);
+    CLFFT_CHECK(clFlush(queue));
+    CLFFT_CHECK(clFinish(queue));
+    CLFFT_CHECK(clReleaseCommandQueue(queue));
+    CLFFT_CHECK(clReleaseContext(context));
 
     return 0;
 }
